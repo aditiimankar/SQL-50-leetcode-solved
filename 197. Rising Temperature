@@ -16,37 +16,15 @@ Write a solution to find all dates' id with higher temperatures compared to its 
 
 Return the result table in any order.
 
-The result format is in the following example.
+SQL:    select w1.id
+        from weather w1, weather w2
+        where DATEDIFF(w1.recordDate, w2.recordDate) = 1 and 
+        w2.temperature < w1.temperature;
 
- 
-
-Example 1:
-
-Input: 
-Weather table:
-+----+------------+-------------+
-| id | recordDate | temperature |
-+----+------------+-------------+
-| 1  | 2015-01-01 | 10          |
-| 2  | 2015-01-02 | 25          |
-| 3  | 2015-01-03 | 20          |
-| 4  | 2015-01-04 | 30          |
-+----+------------+-------------+
-Output: 
-+----+
-| id |
-+----+
-| 2  |
-| 4  |
-+----+
-Explanation: 
-In 2015-01-02, the temperature was higher than the previous day (10 -> 25).
-In 2015-01-04, the temperature was higher than the previous day (20 -> 30).
-
-SQL: 
-select w1.id
-from weather w1
-join weather w2
-where DATEDIFF(w1.recordDate, w2.recordDate) = 1
-AND w1.temperature > w2.temperature;
-
+PANDAS:     df = weather
+            df.sort_values('recordDate', inplace=True)                     #inplace is use to do chances in original data, here value wont get sorted is inplace not used)
+            df['prev_day_temp'] = df['temperature'].shift(1)
+            df['prev_recordDate'] = df['recordDate'].shift(1)
+            df['daysdiff'] = (df['recordDate'] - df['prev_recordDate']).dt.days        #if days are like 14 & 16
+            fc = (df['temperature']>df['prev_day_temp']) & (df['daysdiff']==1)
+            return df[fc][['id']]
