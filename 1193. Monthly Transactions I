@@ -1,0 +1,45 @@
+Table: Transactions
+
++---------------+---------+
+| Column Name   | Type    |
++---------------+---------+
+| id            | int     |
+| country       | varchar |
+| state         | enum    |
+| amount        | int     |
+| trans_date    | date    |
++---------------+---------+
+id is the primary key of this table.
+The table has information about incoming transactions.
+The state column is an enum of type ["approved", "declined"].
+ 
+
+Write an SQL query to find for each month and country, the number of transactions and their total amount, the number of approved transactions and their total amount.
+
+Return the result table in any order.
+
+SQL: select date_format(trans_date, '%Y-%m') as month,
+       country, 
+       COUNT(ID)  as trans_count, 
+       sum(case when state='approved' then 1 else 0 end) as approved_count ,
+       SUM(amount) as trans_total_amount, 
+       SUM(CASE WHEN state = 'approved' THEN amount ELSE 0 END) AS approved_total_amount 
+from transactions
+group by month, country;
+
+PANDA:  # 1️⃣ Extract year-month from date
+          transactions['month'] = pd.to_datetime(transactions['trans_date']).dt.strftime('%Y-%m')
+      
+          # 2️⃣ Group by month and country
+          result = (
+              transactions
+              .groupby(['month', 'country'], as_index=False)
+              .agg(
+                  trans_count=('id', 'count'),
+                  approved_count=('state', lambda x: (x == 'approved').sum()),
+                  trans_total_amount=('amount', 'sum'),
+                  approved_total_amount=('amount', lambda x: x[transactions.loc[x.index, 'state'] == 'approved'].sum())
+              )
+          )
+      
+          return result
