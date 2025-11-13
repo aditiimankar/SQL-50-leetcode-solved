@@ -1,0 +1,49 @@
+Table: Activity
+
++---------------+---------+
+| Column Name   | Type    |
++---------------+---------+
+| user_id       | int     |
+| session_id    | int     |
+| activity_date | date    |
+| activity_type | enum    |
++---------------+---------+
+This table may have duplicate rows.
+The activity_type column is an ENUM (category) of type ('open_session', 'end_session', 'scroll_down', 'send_message').
+The table shows the user activities for a social media website. 
+Note that each session belongs to exactly one user.
+ 
+
+Write a solution to find the daily active user count for a period of 30 days ending 2019-07-27 inclusively. A user was active on someday if they made at least one activity on that day.
+
+Return the result table in any order.
+
+The result format is in the following example.
+
+Note: Any activity from ('open_session', 'end_session', 'scroll_down', 'send_message') will be considered valid activity for a user to be considered active on a day.
+
+PANDAS:    #Ensure the date column is a proper datetime type
+            activity['activity_date'] = pd.to_datetime(activity['activity_date'])
+           
+            max_date = pd.to_datetime(activity['activity_date'].max())
+            #This finds the most recent date in the dataset
+        
+            start_date = max_date - pd.Timedelta(days=29) #subtract 29 days from the max date(since the window includes both start & end days)
+            #So:start_date = 2019-07-28 - 29 days = 2019-06-29
+        
+            recent_activity = activity[
+                (activity['activity_date'] >= start_date) & 
+                (activity['activity_date'] <= max_date)
+            ]    #This keeps only rows where the date is between 2019-06-29 and 2019-07-28
+            
+            result = (recent_activity.groupby('activity_date')['user_id'].nunique()
+                                    .reset_index(name='active_users')
+                                    .rename(columns={'activity_date':'day'})
+                                    .sort_values('day')
+            )
+            return result
+
+SQL:  select activity_date as day, count(distinct user_id) as active_users
+      from  activity
+      where activity_date between DATE_SUB('2019-07-27', INTERVAL 29 DAY) AND '2019-07-27'
+      group by activity_date
